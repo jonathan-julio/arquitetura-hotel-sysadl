@@ -1,0 +1,297 @@
+Model SysADLModel;
+
+package SysADL.types {
+
+    value type Int {
+    }
+
+    value type Boolean {
+    }
+
+    value type String {
+    }
+
+    value type Void {
+    }
+
+    value type Real {
+    }
+
+    dimension Dinheiro
+
+    unit Real {
+        dimension = Dinheiro
+    }
+
+    value type Saldo extends Real {
+        unit = Real
+        dimension = Dinheiro
+    }
+
+    value type ID_Dispositivo extends String {
+    }
+
+    dimension Tempo
+
+    unit ms {
+        dimension = Tempo
+    }
+
+    value type TempoAcesso extends Real {
+        unit = ms
+        dimension = Tempo
+    }
+
+    value type StatusAcesso extends Boolean {
+    }
+}
+
+Requirement ControleAcessoFR (RF01) {
+    text = "O sistema deve validar a entrada de hospedes em quartos e areas comuns por meio de cartao, pulseira NFC ou aplicativo configurado para a hospedagem."
+    derive DesempenhoAcessoNFR;
+
+    Requirement ProvisionamentoDispositivoFR (RF02) {
+        text = "O sistema deve configurar o dispositivo de acesso no check-in, associando identificador, periodo de validade, saldo inicial e permissoes de areas."
+        derive GestaoHospedagemFR, PagamentoFR, SegurancaNFR;
+    }
+}
+
+Requirement GestaoHospedagemFR (RF03) {
+    text = "O sistema deve apoiar cadastro de hospedes, consulta de disponibilidade, reservas, check-in, check-out e historico inicial de hospedagens."
+    derive EscalabilidadeNFR;
+
+    Requirement CheckInCheckOutFR (RF04) {
+        text = "O sistema deve registrar check-in e check-out, atribuir quarto, atualizar status da hospedagem e encerrar o uso do dispositivo ao final."
+    }
+
+    Requirement ConsumoServicosFR (RF05) {
+        text = "O sistema deve registrar consumos de restaurante, frigobar, lavanderia, areas pagas e outros servicos usando o dispositivo do hospede."
+        derive ControleAreasFR;
+    }
+}
+
+Requirement ControleAreasFR (RF06) {
+    text = "O sistema deve controlar o acesso a areas comuns, respeitando regras basicas de permissao, capacidade e horario."
+}
+
+Requirement PagamentoFR (RF07) {
+    text = "O sistema deve permitir pagamento por saldo pre-pago no dispositivo ou liquidacao final por Pix, debito ou credito no check-out."
+}
+
+Requirement EscalabilidadeNFR (RNF01) {
+    text = "A arquitetura deve suportar desde pousadas pequenas ate resorts com muitos quartos, areas e dispositivos ativos."
+}
+
+Requirement DisponibilidadeNFR (RNF02) {
+    text = "O controle de acesso deve continuar operando em situacoes de falha parcial, evitando bloqueio indevido de hospedes."
+}
+
+Requirement SegurancaNFR (RNF03) {
+    text = "Dispositivos, leitores, controladores e servidor devem proteger identificacao, autorizacao e transacoes contra uso indevido."
+}
+
+Requirement ModificabilidadeNFR (RNF04) {
+    text = "A arquitetura deve permitir adicionar novos tipos de dispositivo, novas areas de acesso e novas formas de pagamento."
+}
+
+Requirement DesempenhoAcessoNFR (RNF05) {
+    text = "A validacao de acesso deve responder rapidamente para evitar filas em portas, catracas e pontos de entrada."
+}
+
+package SysADL_ports {
+
+    import SysADL.types;
+
+    port def leituraDispositivoOPT {
+        flow out ID_Dispositivo
+    }
+
+    port def comandoAtuadorIPT {
+        flow in StatusAcesso
+    }
+
+    port def provisionaDispositivoOPT {
+        flow out Saldo
+    }
+
+    port def solicitaCheckoutOPT {
+        flow out ID_Dispositivo
+    }
+
+    port def statusOperacaoIPT {
+        flow in Boolean
+    }
+
+    port def requisicaoConsumoOPT {
+        flow out ID_Dispositivo
+    }
+
+    port def autorizaConsumoIPT {
+        flow in Boolean
+    }
+
+    port def tempoAcessoOPT {
+        flow out TempoAcesso
+    }
+
+    port def registroReservaOPT {
+        flow out ID_Dispositivo
+    }
+
+    port def validacaoAreaOPT {
+        flow out ID_Dispositivo
+    }
+
+    port def liberaAreaIPT {
+        flow in Boolean
+    }
+
+    port def validaAcessoIPT {
+        flow in ID_Dispositivo
+    }
+
+    port def autorizaAcessoOPT {
+        flow out StatusAcesso
+    }
+
+    port def processaFinanceiroIPT {
+        flow in Saldo
+    }
+
+    port def gestaoSaldoOPT {
+        flow out Boolean
+    }
+    
+    port def registroReservaIPT {
+    	flow in ID_Dispositivo
+	}
+
+	port def solicitaCheckoutIPT {
+	    flow in ID_Dispositivo
+	}
+	
+	port def processaFinanceiroOPT {
+	    flow out Saldo
+	}
+	
+	port def autorizaConsumoOPT {
+	    flow out Boolean
+	}
+	
+	port def statusOperacaoOPT {
+	    flow out Boolean
+	}
+}
+
+package SysADL_connectors {
+
+    import SysADL_ports;
+
+    connector def controleAcessoCN {
+        participants:
+            ~acesso : autorizaAcessoOPT;
+            ~comando : comandoAtuadorIPT;
+    }
+
+    connector def identificacaoHospedeCN {
+        participants:
+            ~ validarAcesso : validaAcessoIPT;
+            ~ leituraDispositivo : leituraDispositivoOPT;
+            ~ checkout : solicitaCheckoutOPT;
+            ~ consumo : requisicaoConsumoOPT;
+            ~ pedido : registroReservaOPT;
+            ~ areaComum : validacaoAreaOPT;
+    }
+
+    connector def provisionamentoDispositivoCN {
+        participants:
+            ~ dispositivo : provisionaDispositivoOPT;
+            ~ financeiro : processaFinanceiroIPT;
+    }
+
+    connector def tempoAcessoCN {
+        participants:
+            ~ tempo : tempoAcessoOPT;
+            ~ financeiro : processaFinanceiroIPT;
+    }
+
+    connector def autorizacaoOperacaoCN {
+        participants:
+            ~ gestao : gestaoSaldoOPT;
+            ~ status : statusOperacaoIPT;
+            ~ autoriza : autorizaConsumoIPT;
+            ~ liberacaoArea : liberaAreaIPT;
+    }
+    
+    connector def reservaCN {
+	    participants:
+	        ~ origem : registroReservaOPT;
+	        ~ destino : registroReservaIPT;
+	}
+
+	connector def checkoutCN {
+	    participants:
+	        ~ origem : solicitaCheckoutOPT;
+	        ~ destino : solicitaCheckoutIPT;
+	}
+	
+	connector def financeiroCN {
+	    participants:
+	        ~ origem : processaFinanceiroOPT;
+	        ~ destino : processaFinanceiroIPT;
+	}
+}
+
+package SysADL_components {
+
+    import SysADL_connectors;
+    import SysADL_ports;
+
+    component def SistemaHotelResortCP {
+    configuration { components : leitor : LeitorDispositivoCP { using ports : leituraDispositivo : leituraDispositivoOPT ; } atuador : AtuadorPortaCP { using ports : comando : comandoAtuadorIPT ; } terminalCheckOut : TerminalCheckOutCP { using ports :   checkout : solicitaCheckoutOPT ; } pontoConsumo : PontoConsumoCP { using ports :   solicitacaoConsumo : requisicaoConsumoOPT ; } sensorAcesso : SensorAcessoCP { using ports :   solicitacaoTempoAcesso : tempoAcessoOPT ; }  areaComum : AreaComumCP { using ports :   solicitacaoArea : validacaoAreaOPT ; }   pagamento : ValidadorPagamentoCP { using ports : financeiro : processaFinanceiroIPT ;   saldoValidado : gestaoSaldoOPT ; }    ctrlArea : ControladorAreaCP { using ports : validacaoArea : validacaoAreaOPT ;   } repo : RepositorioDadosCP { using ports :    saldo : gestaoSaldoOPT ;  }  ControladorAcessoCP : ControladorAcessoCP { using ports : validacao : validaAcessoIPT ; autorizacaoAcesso : autorizaAcessoOPT ; }   reservas : GerenciadorReservasCP { using ports :   reservaRecebida : registroReservaIPT ;  } dispositivos : GerenciadorDispositivosCP { using ports :      checkoutRecebido : solicitaCheckoutIPT ; } terminalReserva : TerminalReservaCP { using ports :   reservaTerminal : registroReservaOPT ; } consumo : ControladorConsumoCP { using ports : consumoSolicitado : requisicaoConsumoOPT ;   saidaFinanceiraConsumo : processaFinanceiroOPT ; } ControladorTempoAcessoCP : ControladorTempoAcessoCP { using ports : tempoSolicitado : tempoAcessoOPT ;   saidaFinanceiraTempoAcesso : processaFinanceiroOPT ; } sistema : OrquestradorHotelCP { using ports : entradaFinanceira : processaFinanceiroIPT ; saidaFinanceira : processaFinanceiroOPT ; } connectors :  c1 : identificacaoHospedeCN bindings leituraDispositivo = validacao ; c2 : controleAcessoCN bindings autorizacaoAcesso = comando ;    c6 : identificacaoHospedeCN bindings solicitacaoArea = validacaoArea ; c3 : reservaCN bindings reservaTerminal = reservaRecebida ; c4 : checkoutCN bindings checkout = checkoutRecebido ; c5 : identificacaoHospedeCN bindings solicitacaoConsumo = consumoSolicitado ;  c7 : tempoAcessoCN bindings solicitacaoTempoAcesso = tempoSolicitado ;  c11 : autorizacaoOperacaoCN bindings saldoValidado = saldo ; c9 : financeiroCN bindings saidaFinanceiraConsumo = entradaFinanceira ; c10 : financeiroCN bindings saidaFinanceiraTempoAcesso = entradaFinanceira ; c11 : financeiroCN bindings saidaFinanceira = financeiro ; } }
+
+    component def ControladorAcessoCP {
+    ports :  validacao : validaAcessoIPT ; autorizacaoAcesso : autorizaAcessoOPT ; }
+
+    component def GerenciadorDispositivosCP {
+    ports :      checkoutRecebido : solicitaCheckoutIPT ; }
+
+    component def ValidadorPagamentoCP {
+    ports : financeiro : processaFinanceiroIPT ;   saldoValidado : gestaoSaldoOPT ; }
+
+    component def ControladorConsumoCP {
+    ports : consumoSolicitado : requisicaoConsumoOPT ;    saidaFinanceiraConsumo : processaFinanceiroOPT ; }
+
+    component def ControladorTempoAcessoCP {
+    ports : tempoSolicitado : tempoAcessoOPT ;    saidaFinanceiraTempoAcesso : processaFinanceiroOPT ; }
+
+    component def GerenciadorReservasCP {
+    ports :      reservaRecebida : registroReservaIPT ;  }
+
+    component def ControladorAreaCP {
+    ports : validacaoArea : validacaoAreaOPT ;   }
+
+    component def RepositorioDadosCP {
+    ports :    saldo : gestaoSaldoOPT ;  }
+
+    boundary component def LeitorDispositivoCP {
+    ports : leituraDispositivo : leituraDispositivoOPT ; }
+
+    boundary component def AtuadorPortaCP {
+    ports : comando : comandoAtuadorIPT ; }
+
+    boundary component def TerminalCheckOutCP {
+    ports :   checkout : solicitaCheckoutOPT ; }
+
+    boundary component def PontoConsumoCP {
+    ports :   solicitacaoConsumo : requisicaoConsumoOPT ; }
+
+    boundary component def SensorAcessoCP {
+    ports :   solicitacaoTempoAcesso : tempoAcessoOPT ; }
+
+    boundary component def TerminalReservaCP {
+    ports :    reservaTerminal : registroReservaOPT ; }
+
+    boundary component def AreaComumCP {
+    ports :   solicitacaoArea : validacaoAreaOPT ; }
+component def OrquestradorHotelCP { ports : entradaFinanceira : processaFinanceiroIPT ; saidaFinanceira : processaFinanceiroOPT ; } }
