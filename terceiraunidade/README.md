@@ -23,8 +23,8 @@ As definicoes comportamentais estao no `My.sysadl`:
 - `RealizarCheckOutAC`
 - `RegistrarConsumoAC`
 
-As imagens em `imagens/` servem como apoio visual para conferir e reproduzir as visoes estruturais e comportamentais do projeto.
+As visualizacoes estruturais estao organizadas no arquivo `representations.aird`.
 
 ## Estilo arquitetural
 
-O mapeamento do Feedback Control Loop esta documentado em `docs/03_estilo_feedback_control_loop.md`.
+O mapeamento do Feedback Control Loop esta documentado em `../03_estilo_feedback_control_loop.md`.

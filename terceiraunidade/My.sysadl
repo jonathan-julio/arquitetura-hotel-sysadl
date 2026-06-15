@@ -159,7 +159,7 @@ package SysADL_components {
                 c4 : checkoutCN bindings checkout = checkoutRecebido ;
                 c5 : identificacaoHospedeCN bindings solicitacaoConsumo = consumoSolicitado ;
                 c7 : tempoAcessoCN bindings solicitacaoTempoAcesso = tempoSolicitado ;
-                c11 : autorizacaoOperacaoCN bindings saldoValidado = saldo ;
+                c8 : autorizacaoOperacaoCN bindings saldoValidado = saldo ;
                 c9 : financeiroCN bindings saidaFinanceiraConsumo = entradaFinanceira ;
                 c10 : financeiroCN bindings saidaFinanceiraTempoAcesso = entradaFinanceira ;
                 c11 : financeiroCN bindings saidaFinanceira = financeiro ;
@@ -183,83 +183,83 @@ package SysADL_components {
     boundary component def AreaComumCP { ports : solicitacaoArea : validacaoAreaOPT ; }
     component def OrquestradorHotelCP { ports : entradaFinanceira : processaFinanceiroIPT ; saidaFinanceira : processaFinanceiroOPT ; }
 
-    constraint ValidarCheckInEQ ( t1 : Boolean , t2 : Boolean ) : ( av : Boolean ) {
-        equation = av == (t1 == true && t2 == true)
+    constraint ValidarCheckInEQ ( reservaConfirmada : Boolean , pagamentoInicialAprovado : Boolean ) : ( checkInAutorizado : Boolean ) {
+        equation = checkInAutorizado == (reservaConfirmada == true && pagamentoInicialAprovado == true)
     }
 
-    constraint DecidirAcessoEQ ( detected : Boolean , userTemp : Boolean ) : ( target : Boolean ) {
-        equation = target == (detected == true && userTemp == true)
+    constraint DecidirAcessoEQ ( dispositivoIdentificado : Boolean , hospedagemAtiva : Boolean ) : ( acessoAutorizado : Boolean ) {
+        equation = acessoAutorizado == (dispositivoIdentificado == true && hospedagemAtiva == true)
     }
 
-    constraint CalcularFaturaEQ ( target : Saldo , average : Saldo ) : ( cmds : Boolean ) {
-        equation = cmds == (average == target)
+    constraint CalcularFaturaEQ ( valorCalculado : Saldo , valorCobrado : Saldo ) : ( faturaValidada : Boolean ) {
+        equation = faturaValidada == (valorCalculado == valorCobrado)
     }
 
-    constraint ProcessarPagamentoEQ ( cmds : Boolean ) : ( c : Boolean ) {
-        equation = c == cmds
+    constraint ProcessarPagamentoEQ ( faturaValidada : Boolean ) : ( pagamentoProcessado : Boolean ) {
+        equation = pagamentoProcessado == faturaValidada
     }
 
-    constraint RevogarDispositivoEQ ( cmds : Boolean ) : ( c : Boolean ) {
-        equation = c == cmds
+    constraint RevogarDispositivoEQ ( faturaValidada : Boolean ) : ( dispositivoRevogado : Boolean ) {
+        equation = dispositivoRevogado == faturaValidada
     }
 
-    constraint RegistrarConsumoEQ ( f : Saldo ) : ( c : Saldo ) {
-        equation = c == f
+    constraint RegistrarConsumoEQ ( valorConsumo : Saldo ) : ( consumoRegistrado : Saldo ) {
+        equation = consumoRegistrado == valorConsumo
     }
 
-    activity def RealizarCheckInAC ( t1 : Boolean ) ( t2 : Boolean ) : ( av : Boolean ) {
+    activity def RealizarCheckInAC ( reservaConfirmada : Boolean ) ( pagamentoInicialAprovado : Boolean ) : ( checkInAutorizado : Boolean ) {
         body {
-            actions : validarCheckIn : ValidarCheckInAN { using pins : t1 : Boolean ; t2 : Boolean ; }
-            delegate t1 to t1
-            delegate t2 to t2
-            delegate av to validarCheckIn
+            actions : validarCheckIn : ValidarCheckInAN { using pins : reservaConfirmada : Boolean ; pagamentoInicialAprovado : Boolean ; }
+            delegate reservaConfirmada to reservaConfirmada
+            delegate pagamentoInicialAprovado to pagamentoInicialAprovado
+            delegate checkInAutorizado to validarCheckIn
         }
     }
 
-    activity def AutorizarAcessoAC ( detected : Boolean ) ( userTemp : Boolean ) : ( target : Boolean ) {
+    activity def AutorizarAcessoAC ( dispositivoIdentificado : Boolean ) ( hospedagemAtiva : Boolean ) : ( acessoAutorizado : Boolean ) {
         body {
-            actions : DecidirAcessoAN : DecidirAcessoAN { using pins : detected : Boolean ; userTemp : Boolean ; }
-            delegate detected to detected
-            delegate userTemp to userTemp
-            delegate target to DecidirAcessoAN
+            actions : decidirAcesso : DecidirAcessoAN { using pins : dispositivoIdentificado : Boolean ; hospedagemAtiva : Boolean ; }
+            delegate dispositivoIdentificado to dispositivoIdentificado
+            delegate hospedagemAtiva to hospedagemAtiva
+            delegate acessoAutorizado to decidirAcesso
         }
     }
 
-    activity def RealizarCheckOutAC ( average2 : Saldo ) ( target2 : Saldo ) : ( cooling : Boolean , heating : Boolean ) {
+    activity def RealizarCheckOutAC ( valorCalculado : Saldo ) ( valorCobrado : Saldo ) : ( dispositivoRevogado : Boolean , pagamentoProcessado : Boolean ) {
         body {
-            actions : ct : CalcularFaturaAN { using pins : average2 : Saldo ; target2 : Saldo ; }
-                      cmdH : ProcessarPagamentoAN { using pins : cmdsH : Boolean ; }
-                      cmdC : RevogarDispositivoAN { using pins : cmdsC : Boolean ; }
-            delegate average2 to average2
-            delegate target2 to target2
-            delegate cooling to cmdC
-            delegate heating to cmdH
-            flow from ct to cmdsH
-            flow from ct to cmdsC
+            actions : calcularFatura : CalcularFaturaAN { using pins : valorCalculado : Saldo ; valorCobrado : Saldo ; }
+                      processarPagamento : ProcessarPagamentoAN { using pins : faturaValidadaPagamento : Boolean ; }
+                      revogarDispositivo : RevogarDispositivoAN { using pins : faturaValidadaRevogacao : Boolean ; }
+            delegate valorCalculado to valorCalculado
+            delegate valorCobrado to valorCobrado
+            delegate dispositivoRevogado to revogarDispositivo
+            delegate pagamentoProcessado to processarPagamento
+            flow from calcularFatura to faturaValidadaPagamento
+            flow from calcularFatura to faturaValidadaRevogacao
         }
     }
 
-    activity def RegistrarConsumoAC ( f : Saldo ) : ( c : Saldo ) {
+    activity def RegistrarConsumoAC ( valorConsumo : Saldo ) : ( consumoRegistrado : Saldo ) {
         body {
-            actions : FtC : RegistrarConsumoAN { using pins : f : Saldo ; }
-            delegate f to f
-            delegate c to FtC
+            actions : registrarConsumo : RegistrarConsumoAN { using pins : valorConsumo : Saldo ; }
+            delegate valorConsumo to valorConsumo
+            delegate consumoRegistrado to registrarConsumo
         }
     }
 
-    action def ValidarCheckInAN ( t1 : Boolean , t2 : Boolean ) : Boolean { constraint : post-condition ValidarCheckInEQ }
-    action def DecidirAcessoAN ( detected : Boolean , userTemp : Boolean ) : Boolean { constraint : post-condition DecidirAcessoEQ }
-    action def CalcularFaturaAN ( averageTemp : Saldo , targetTemp : Saldo ) : Boolean { constraint : post-condition CalcularFaturaEQ }
-    action def ProcessarPagamentoAN ( cmds : Boolean ) : Boolean { constraint : post-condition ProcessarPagamentoEQ }
-    action def RevogarDispositivoAN ( cmds : Boolean ) : Boolean { constraint : post-condition RevogarDispositivoEQ }
-    action def RegistrarConsumoAN ( f : Saldo ) : Saldo { constraint : post-condition RegistrarConsumoEQ }
+    action def ValidarCheckInAN ( reservaConfirmada : Boolean , pagamentoInicialAprovado : Boolean ) : Boolean { constraint : post-condition ValidarCheckInEQ }
+    action def DecidirAcessoAN ( dispositivoIdentificado : Boolean , hospedagemAtiva : Boolean ) : Boolean { constraint : post-condition DecidirAcessoEQ }
+    action def CalcularFaturaAN ( valorCalculado : Saldo , valorCobrado : Saldo ) : Boolean { constraint : post-condition CalcularFaturaEQ }
+    action def ProcessarPagamentoAN ( faturaValidada : Boolean ) : Boolean { constraint : post-condition ProcessarPagamentoEQ }
+    action def RevogarDispositivoAN ( faturaValidada : Boolean ) : Boolean { constraint : post-condition RevogarDispositivoEQ }
+    action def RegistrarConsumoAN ( valorConsumo : Saldo ) : Saldo { constraint : post-condition RegistrarConsumoEQ }
 
-    executable def RealizarCheckInEX(in t1:Boolean, in t2:Boolean): out Boolean { return t1 && t2 ; }
-    executable def AutorizarAcessoEX(in detected:Boolean, in userTemp:Boolean): out Boolean { return detected && userTemp ; }
-    executable def CalcularFaturaEX(in target:Saldo, in average:Saldo): out Boolean { return target == average ; }
-    executable def ProcessarPagamentoEX(in cmds:Boolean): out Boolean { return cmds ; }
-    executable def RevogarDispositivoEX(in cmds:Boolean): out Boolean { return cmds ; }
-    executable def RegistrarConsumoEX(in f:Saldo): out Saldo { return f ; }
+    executable def RealizarCheckInEX(in reservaConfirmada:Boolean, in pagamentoInicialAprovado:Boolean): out Boolean { return reservaConfirmada && pagamentoInicialAprovado ; }
+    executable def AutorizarAcessoEX(in dispositivoIdentificado:Boolean, in hospedagemAtiva:Boolean): out Boolean { return dispositivoIdentificado && hospedagemAtiva ; }
+    executable def CalcularFaturaEX(in valorCalculado:Saldo, in valorCobrado:Saldo): out Boolean { return valorCalculado == valorCobrado ; }
+    executable def ProcessarPagamentoEX(in faturaValidada:Boolean): out Boolean { return faturaValidada ; }
+    executable def RevogarDispositivoEX(in faturaValidada:Boolean): out Boolean { return faturaValidada ; }
+    executable def RegistrarConsumoEX(in valorConsumo:Saldo): out Saldo { return valorConsumo ; }
 }
 
 allocations {
