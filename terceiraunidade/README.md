@@ -12,6 +12,11 @@ O estilo arquitetural adotado para a parte de controle de acesso e **Feedback Co
 - Package Diagram
 - BDD de tipos, portas, conectores e componentes
 - IBD do `SistemaHotelResortCP`
+- BDD comportamental do pacote `SysADL_components`
+- Activity Diagram de `RealizarCheckInAC`
+- Activity Diagram de `AutorizarAcessoAC`
+- Activity Diagram de `RealizarCheckOutAC`
+- Activity Diagram de `RegistrarConsumoAC`
 - Allocation Table
 
 ## Comportamento no modelo
