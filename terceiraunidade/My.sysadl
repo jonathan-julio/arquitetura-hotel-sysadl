@@ -9,10 +9,14 @@ package SysADL.types {
     value type Real {}
 
     dimension Dinheiro
-    unit Real { dimension = Dinheiro }
+    unit BRL { dimension = Dinheiro }
 
-    value type Saldo extends Real { unit = Real dimension = Dinheiro }
+    value type Saldo extends Real { unit = BRL dimension = Dinheiro }
     value type ID_Dispositivo extends String {}
+    value type ID_Hospede extends String {}
+    value type ID_Reserva extends String {}
+    value type ID_Hospedagem extends String {}
+    value type DataHora extends String {}
 
     dimension Tempo
     unit ms { dimension = Tempo }
@@ -21,67 +25,90 @@ package SysADL.types {
     value type StatusAcesso extends Boolean {}
 
     enum ResultadoAcesso { AUTORIZADO, NEGADO }
+    enum EstadoPorta { ABERTA, FECHADA, BLOQUEADA }
     enum StatusHospedagem { ATIVA, ENCERRADA }
     enum StatusDispositivo { ATIVO, BLOQUEADO }
+    enum StatusCadastro { CADASTRADO, DADOS_INVALIDOS, JA_CADASTRADO, FALHA_PERSISTENCIA }
+    enum OperacaoPersistencia { SALVAR, CONSULTAR, ATUALIZAR }
+    enum TipoRegistroPersistencia { HOSPEDE, RESERVA, HOSPEDAGEM, CONSUMO, PAGAMENTO, ACESSO }
 
     datatype DecisaoAcesso { attributes : autorizado : Boolean ; motivo : String ; }
     datatype ResultadoCheckOut { attributes : pago : Boolean ; dispositivoRevogado : Boolean ; }
+    datatype DadosHospede { attributes : idHospede : ID_Hospede ; nome : String ; documento : String ; contato : String ; }
+    datatype DadosReserva { attributes : idReserva : ID_Reserva ; idHospede : ID_Hospede ; dataEntrada : DataHora ; dataSaida : DataHora ; }
+    datatype DadosHospedagem { attributes : idHospedagem : ID_Hospedagem ; idHospede : ID_Hospede ; idReserva : ID_Reserva ; status : StatusHospedagem ; }
+    datatype RegistroConsumo { attributes : idHospedagem : ID_Hospedagem ; valor : Saldo ; descricao : String ; dataHora : DataHora ; }
+    datatype RegistroPagamento { attributes : idHospedagem : ID_Hospedagem ; valor : Saldo ; aprovado : Boolean ; dataHora : DataHora ; }
+    datatype RegistroAcesso { attributes : idDispositivo : ID_Dispositivo ; resultado : ResultadoAcesso ; dataHora : DataHora ; }
+    datatype ResultadoCadastro { attributes : status : StatusCadastro ; idHospede : ID_Hospede ; mensagem : String ; }
+    datatype SolicitacaoPersistencia { attributes : operacao : OperacaoPersistencia ; tipoRegistro : TipoRegistroPersistencia ; identificador : String ; dados : String ; }
+    datatype ResultadoPersistencia { attributes : sucesso : Boolean ; dados : String ; mensagem : String ; }
 }
 
-Requirement ControleAcessoFR (RF01) {
+Requirement ControleAcessoFR (1) {
     text = "O sistema deve validar o acesso do hospede a quartos e areas comuns usando dispositivo ativo, regras de permissao e resposta rapida."
     derive DesempenhoAcessoNFR, SegurancaNFR;
 
-    Requirement ProvisionamentoDispositivoFR (RF02) {
+    Requirement ProvisionamentoDispositivoFR (2) {
         text = "O sistema deve provisionar o dispositivo no check-in e revoga-lo no check-out."
-        derive CheckInCheckOutFR, SegurancaNFR;
+        derive GestaoHospedagemFR.CheckInCheckOutFR, SegurancaNFR;
     }
 }
 
-Requirement GestaoHospedagemFR (RF03) {
-    text = "O sistema deve apoiar reserva, check-in, check-out e historico basico da hospedagem."
+Requirement GestaoHospedagemFR (3) {
+    text = "O sistema deve apoiar cadastro de hospedes, reserva, check-in, check-out e historico da hospedagem."
     derive EscalabilidadeNFR;
 
-    Requirement CheckInCheckOutFR (RF04) {
+    Requirement CheckInCheckOutFR (4) {
         text = "O sistema deve realizar check-in com dispositivo ativo e check-out com pagamento e revogacao."
         derive PagamentoFR;
     }
 
-    Requirement ConsumoServicosFR (RF05) {
+    Requirement ConsumoServicosFR (5) {
         text = "O sistema deve registrar consumos do hospede e encaminhar os valores para pagamento."
         derive PagamentoFR;
     }
+
+    Requirement CadastroHospedeFR (8) {
+        text = "O sistema deve cadastrar, consultar e atualizar os dados do hospede antes ou durante a reserva."
+        derive SegurancaNFR;
+    }
+
+    Requirement PersistenciaDadosFR (9) {
+        text = "O sistema deve persistir e recuperar dados de hospedes, reservas, hospedagens, consumos, pagamentos e acessos."
+        derive DisponibilidadeNFR, SegurancaNFR;
+    }
 }
 
-Requirement ControleAreasFR (RF06) {
+Requirement ControleAreasFR (6) {
     text = "O sistema deve controlar areas comuns considerando permissao, capacidade e horario."
 }
 
-Requirement PagamentoFR (RF07) {
+Requirement PagamentoFR (7) {
     text = "O sistema deve consolidar consumos e permitir pagamento no check-out."
 }
 
-Requirement EscalabilidadeNFR (RNF01) {
+Requirement EscalabilidadeNFR (10) {
     text = "A arquitetura deve permitir evolucao de pousada pequena para resort com mais quartos e pontos de acesso."
 }
 
-Requirement DisponibilidadeNFR (RNF02) {
+Requirement DisponibilidadeNFR (11) {
     text = "O controle de acesso deve manter operacao local em caso de falha temporaria de comunicacao."
 }
 
-Requirement SegurancaNFR (RNF03) {
+Requirement SegurancaNFR (12) {
     text = "A arquitetura deve proteger identificacao, autorizacao, pagamentos e trilha de auditoria."
 }
 
-Requirement ModificabilidadeNFR (RNF04) {
+Requirement ModificabilidadeNFR (13) {
     text = "A arquitetura deve permitir adicionar novos dispositivos, areas e formas de pagamento."
 }
 
-Requirement DesempenhoAcessoNFR (RNF05) {
+Requirement DesempenhoAcessoNFR (14) {
     text = "A validacao de acesso deve ocorrer rapidamente para evitar filas."
 }
 
-Requirement EstiloFeedbackControlLoopNFR (RNF06) {
+Requirement EstiloFeedbackControlLoopNFR (15) {
     text = "A parte de controle de acesso deve seguir o estilo arquitetural Feedback Control Loop, com sensores/leitores fornecendo dados, controladores decidindo a autorizacao e atuadores executando comandos no ambiente."
     derive DesempenhoAcessoNFR, DisponibilidadeNFR, ModificabilidadeNFR;
 }
@@ -91,39 +118,60 @@ package SysADL_ports {
     import SysADL.types;
 
     port def leituraDispositivoOPT { flow out ID_Dispositivo }
-    port def comandoAtuadorIPT { flow in StatusAcesso }
-    port def provisionaDispositivoOPT { flow out Saldo }
-    port def solicitaCheckoutOPT { flow out ID_Dispositivo }
-    port def statusOperacaoIPT { flow in Boolean }
-    port def requisicaoConsumoOPT { flow out ID_Dispositivo }
-    port def autorizaConsumoIPT { flow in Boolean }
-    port def tempoAcessoOPT { flow out TempoAcesso }
-    port def registroReservaOPT { flow out ID_Dispositivo }
-    port def validacaoAreaOPT { flow out ID_Dispositivo }
-    port def liberaAreaIPT { flow in Boolean }
     port def validaAcessoIPT { flow in ID_Dispositivo }
     port def autorizaAcessoOPT { flow out StatusAcesso }
+    port def comandoAtuadorIPT { flow in StatusAcesso }
+    port def estadoPortaOPT { flow out EstadoPorta }
+    port def estadoPortaIPT { flow in EstadoPorta }
+
+    port def solicitaCheckoutOPT { flow out ID_Hospedagem }
+    port def solicitaCheckoutIPT { flow in ID_Hospedagem }
+    port def requisicaoConsumoOPT { flow out RegistroConsumo }
+    port def requisicaoConsumoIPT { flow in RegistroConsumo }
+    port def tempoAcessoOPT { flow out TempoAcesso }
+    port def tempoAcessoIPT { flow in TempoAcesso }
+    port def registroReservaOPT { flow out ID_Reserva }
+    port def registroReservaIPT { flow in ID_Reserva }
+    port def validacaoAreaOPT { flow out ID_Dispositivo }
+    port def validacaoAreaIPT { flow in ID_Dispositivo }
+    port def liberaAreaOPT { flow out Boolean }
+    port def liberaAreaIPT { flow in Boolean }
+
+    port def processaFinanceiroOPT { flow out Saldo }
     port def processaFinanceiroIPT { flow in Saldo }
     port def gestaoSaldoOPT { flow out Boolean }
-    port def registroReservaIPT { flow in ID_Dispositivo }
-    port def solicitaCheckoutIPT { flow in ID_Dispositivo }
-    port def processaFinanceiroOPT { flow out Saldo }
-    port def autorizaConsumoOPT { flow out Boolean }
-    port def statusOperacaoOPT { flow out Boolean }
+    port def gestaoSaldoIPT { flow in Boolean }
+
+    port def solicitaCadastroHospedeOPT { flow out DadosHospede }
+    port def solicitaCadastroHospedeIPT { flow in DadosHospede }
+    port def resultadoCadastroHospedeOPT { flow out ResultadoCadastro }
+    port def resultadoCadastroHospedeIPT { flow in ResultadoCadastro }
+
+    port def solicitacaoPersistenciaOPT { flow out SolicitacaoPersistencia }
+    port def solicitacaoPersistenciaIPT { flow in SolicitacaoPersistencia }
+    port def resultadoPersistenciaOPT { flow out ResultadoPersistencia }
+    port def resultadoPersistenciaIPT { flow in ResultadoPersistencia }
 }
 
 package SysADL_connectors {
 
     import SysADL_ports;
 
-    connector def controleAcessoCN { participants: ~acesso : autorizaAcessoOPT; ~comando : comandoAtuadorIPT; }
-    connector def identificacaoHospedeCN { participants: ~validarAcesso : validaAcessoIPT; ~leituraDispositivo : leituraDispositivoOPT; ~checkout : solicitaCheckoutOPT; ~consumo : requisicaoConsumoOPT; ~pedido : registroReservaOPT; ~areaComum : validacaoAreaOPT; }
-    connector def provisionamentoDispositivoCN { participants: ~dispositivo : provisionaDispositivoOPT; ~financeiro : processaFinanceiroIPT; }
-    connector def tempoAcessoCN { participants: ~tempo : tempoAcessoOPT; ~financeiro : processaFinanceiroIPT; }
-    connector def autorizacaoOperacaoCN { participants: ~gestao : gestaoSaldoOPT; ~status : statusOperacaoIPT; ~autoriza : autorizaConsumoIPT; ~liberacaoArea : liberaAreaIPT; }
+    connector def leituraDispositivoCN { participants: ~origem : leituraDispositivoOPT; ~destino : validaAcessoIPT; }
+    connector def controleAcessoCN { participants: ~origem : autorizaAcessoOPT; ~destino : comandoAtuadorIPT; }
+    connector def estadoPortaCN { participants: ~origem : estadoPortaOPT; ~destino : estadoPortaIPT; }
+    connector def solicitacaoAreaCN { participants: ~origem : validacaoAreaOPT; ~destino : validacaoAreaIPT; }
+    connector def respostaAreaCN { participants: ~origem : liberaAreaOPT; ~destino : liberaAreaIPT; }
+    connector def solicitacaoConsumoCN { participants: ~origem : requisicaoConsumoOPT; ~destino : requisicaoConsumoIPT; }
+    connector def tempoAcessoCN { participants: ~origem : tempoAcessoOPT; ~destino : tempoAcessoIPT; }
+    connector def statusSaldoCN { participants: ~origem : gestaoSaldoOPT; ~destino : gestaoSaldoIPT; }
     connector def reservaCN { participants: ~origem : registroReservaOPT; ~destino : registroReservaIPT; }
     connector def checkoutCN { participants: ~origem : solicitaCheckoutOPT; ~destino : solicitaCheckoutIPT; }
     connector def financeiroCN { participants: ~origem : processaFinanceiroOPT; ~destino : processaFinanceiroIPT; }
+    connector def solicitacaoCadastroHospedeCN { participants: ~origem : solicitaCadastroHospedeOPT; ~destino : solicitaCadastroHospedeIPT; }
+    connector def resultadoCadastroHospedeCN { participants: ~origem : resultadoCadastroHospedeOPT; ~destino : resultadoCadastroHospedeIPT; }
+    connector def solicitacaoPersistenciaCN { participants: ~origem : solicitacaoPersistenciaOPT; ~destino : solicitacaoPersistenciaIPT; }
+    connector def resultadoPersistenciaCN { participants: ~origem : resultadoPersistenciaOPT; ~destino : resultadoPersistenciaIPT; }
 }
 
 package SysADL_components {
@@ -137,50 +185,72 @@ package SysADL_components {
             components :
                 leitor : LeitorDispositivoCP { using ports : leituraDispositivo : leituraDispositivoOPT ; }
                 atuador : AtuadorPortaCP { using ports : comando : comandoAtuadorIPT ; }
+                sensorEstadoPorta : SensorEstadoPortaCP { using ports : estadoPorta : estadoPortaOPT ; }
                 terminalCheckOut : TerminalCheckOutCP { using ports : checkout : solicitaCheckoutOPT ; }
                 pontoConsumo : PontoConsumoCP { using ports : solicitacaoConsumo : requisicaoConsumoOPT ; }
                 sensorAcesso : SensorAcessoCP { using ports : solicitacaoTempoAcesso : tempoAcessoOPT ; }
-                areaComum : AreaComumCP { using ports : solicitacaoArea : validacaoAreaOPT ; }
-                pagamento : ValidadorPagamentoCP { using ports : financeiro : processaFinanceiroIPT ; saldoValidado : gestaoSaldoOPT ; }
-                ctrlArea : ControladorAreaCP { using ports : validacaoArea : validacaoAreaOPT ; }
-                repo : RepositorioDadosCP { using ports : saldo : gestaoSaldoOPT ; }
-                ControladorAcessoCP : ControladorAcessoCP { using ports : validacao : validaAcessoIPT ; autorizacaoAcesso : autorizaAcessoOPT ; }
-                reservas : GerenciadorReservasCP { using ports : reservaRecebida : registroReservaIPT ; }
-                dispositivos : GerenciadorDispositivosCP { using ports : checkoutRecebido : solicitaCheckoutIPT ; }
+                areaComum : AreaComumCP { using ports : solicitacaoArea : validacaoAreaOPT ; liberacaoArea : liberaAreaIPT ; }
+                terminalCadastro : TerminalCadastroHospedeCP { using ports : dadosCadastro : solicitaCadastroHospedeOPT ; resultadoCadastro : resultadoCadastroHospedeIPT ; }
+                pagamento : ValidadorPagamentoCP { using ports : financeiro : processaFinanceiroIPT ; saldoValidado : gestaoSaldoOPT ; persistenciaPagamento : solicitacaoPersistenciaOPT ; retornoPersistenciaPagamento : resultadoPersistenciaIPT ; }
+                ctrlArea : ControladorAreaCP { using ports : validacaoArea : validacaoAreaIPT ; liberacaoArea : liberaAreaOPT ; }
+                repo : RepositorioDadosCP { using ports : solicitacao : solicitacaoPersistenciaIPT ; resultado : resultadoPersistenciaOPT ; statusSaldo : gestaoSaldoIPT ; }
+                controladorAcesso : ControladorAcessoCP { using ports : validacao : validaAcessoIPT ; estadoPortaAtual : estadoPortaIPT ; autorizacaoAcesso : autorizaAcessoOPT ; persistenciaAcesso : solicitacaoPersistenciaOPT ; retornoPersistenciaAcesso : resultadoPersistenciaIPT ; }
+                hospedes : GerenciadorHospedesCP { using ports : cadastroRecebido : solicitaCadastroHospedeIPT ; resultadoCadastro : resultadoCadastroHospedeOPT ; persistenciaHospede : solicitacaoPersistenciaOPT ; retornoPersistenciaHospede : resultadoPersistenciaIPT ; }
+                reservas : GerenciadorReservasCP { using ports : reservaRecebida : registroReservaIPT ; persistenciaReserva : solicitacaoPersistenciaOPT ; retornoPersistenciaReserva : resultadoPersistenciaIPT ; }
+                hospedagens : GerenciadorHospedagensCP { using ports : checkoutRecebido : solicitaCheckoutIPT ; persistenciaHospedagem : solicitacaoPersistenciaOPT ; retornoPersistenciaHospedagem : resultadoPersistenciaIPT ; }
                 terminalReserva : TerminalReservaCP { using ports : reservaTerminal : registroReservaOPT ; }
-                consumo : ControladorConsumoCP { using ports : consumoSolicitado : requisicaoConsumoOPT ; saidaFinanceiraConsumo : processaFinanceiroOPT ; }
-                ControladorTempoAcessoCP : ControladorTempoAcessoCP { using ports : tempoSolicitado : tempoAcessoOPT ; saidaFinanceiraTempoAcesso : processaFinanceiroOPT ; }
+                consumo : ControladorConsumoCP { using ports : consumoSolicitado : requisicaoConsumoIPT ; saidaFinanceiraConsumo : processaFinanceiroOPT ; persistenciaConsumo : solicitacaoPersistenciaOPT ; retornoPersistenciaConsumo : resultadoPersistenciaIPT ; }
+                controladorTempoAcesso : ControladorTempoAcessoCP { using ports : tempoSolicitado : tempoAcessoIPT ; saidaFinanceiraTempoAcesso : processaFinanceiroOPT ; }
                 sistema : OrquestradorHotelCP { using ports : entradaFinanceira : processaFinanceiroIPT ; saidaFinanceira : processaFinanceiroOPT ; }
             connectors :
-                c1 : identificacaoHospedeCN bindings leituraDispositivo = validacao ;
+                c1 : leituraDispositivoCN bindings leituraDispositivo = validacao ;
                 c2 : controleAcessoCN bindings autorizacaoAcesso = comando ;
-                c6 : identificacaoHospedeCN bindings solicitacaoArea = validacaoArea ;
-                c3 : reservaCN bindings reservaTerminal = reservaRecebida ;
-                c4 : checkoutCN bindings checkout = checkoutRecebido ;
-                c5 : identificacaoHospedeCN bindings solicitacaoConsumo = consumoSolicitado ;
-                c7 : tempoAcessoCN bindings solicitacaoTempoAcesso = tempoSolicitado ;
-                c8 : autorizacaoOperacaoCN bindings saldoValidado = saldo ;
-                c9 : financeiroCN bindings saidaFinanceiraConsumo = entradaFinanceira ;
-                c10 : financeiroCN bindings saidaFinanceiraTempoAcesso = entradaFinanceira ;
-                c11 : financeiroCN bindings saidaFinanceira = financeiro ;
+                c3 : estadoPortaCN bindings estadoPorta = estadoPortaAtual ;
+                c4 : solicitacaoAreaCN bindings solicitacaoArea = validacaoArea ;
+                c5 : respostaAreaCN bindings liberacaoArea = liberacaoArea ;
+                c6 : reservaCN bindings reservaTerminal = reservaRecebida ;
+                c7 : checkoutCN bindings checkout = checkoutRecebido ;
+                c8 : solicitacaoConsumoCN bindings solicitacaoConsumo = consumoSolicitado ;
+                c9 : tempoAcessoCN bindings solicitacaoTempoAcesso = tempoSolicitado ;
+                c10 : statusSaldoCN bindings saldoValidado = statusSaldo ;
+                c11 : financeiroCN bindings saidaFinanceiraConsumo = entradaFinanceira ;
+                c12 : financeiroCN bindings saidaFinanceiraTempoAcesso = entradaFinanceira ;
+                c13 : financeiroCN bindings saidaFinanceira = financeiro ;
+                c14 : solicitacaoCadastroHospedeCN bindings dadosCadastro = cadastroRecebido ;
+                c15 : resultadoCadastroHospedeCN bindings resultadoCadastro = resultadoCadastro ;
+                c16 : solicitacaoPersistenciaCN bindings persistenciaPagamento = solicitacao ;
+                c17 : resultadoPersistenciaCN bindings resultado = retornoPersistenciaPagamento ;
+                c18 : solicitacaoPersistenciaCN bindings persistenciaAcesso = solicitacao ;
+                c19 : resultadoPersistenciaCN bindings resultado = retornoPersistenciaAcesso ;
+                c20 : solicitacaoPersistenciaCN bindings persistenciaHospede = solicitacao ;
+                c21 : resultadoPersistenciaCN bindings resultado = retornoPersistenciaHospede ;
+                c22 : solicitacaoPersistenciaCN bindings persistenciaReserva = solicitacao ;
+                c23 : resultadoPersistenciaCN bindings resultado = retornoPersistenciaReserva ;
+                c24 : solicitacaoPersistenciaCN bindings persistenciaHospedagem = solicitacao ;
+                c25 : resultadoPersistenciaCN bindings resultado = retornoPersistenciaHospedagem ;
+                c26 : solicitacaoPersistenciaCN bindings persistenciaConsumo = solicitacao ;
+                c27 : resultadoPersistenciaCN bindings resultado = retornoPersistenciaConsumo ;
         }
     }
 
-    component def ControladorAcessoCP { ports : validacao : validaAcessoIPT ; autorizacaoAcesso : autorizaAcessoOPT ; }
-    component def GerenciadorDispositivosCP { ports : checkoutRecebido : solicitaCheckoutIPT ; }
-    component def ValidadorPagamentoCP { ports : financeiro : processaFinanceiroIPT ; saldoValidado : gestaoSaldoOPT ; }
-    component def ControladorConsumoCP { ports : consumoSolicitado : requisicaoConsumoOPT ; saidaFinanceiraConsumo : processaFinanceiroOPT ; }
-    component def ControladorTempoAcessoCP { ports : tempoSolicitado : tempoAcessoOPT ; saidaFinanceiraTempoAcesso : processaFinanceiroOPT ; }
-    component def GerenciadorReservasCP { ports : reservaRecebida : registroReservaIPT ; }
-    component def ControladorAreaCP { ports : validacaoArea : validacaoAreaOPT ; }
-    component def RepositorioDadosCP { ports : saldo : gestaoSaldoOPT ; }
+    component def ControladorAcessoCP { ports : validacao : validaAcessoIPT ; estadoPortaAtual : estadoPortaIPT ; autorizacaoAcesso : autorizaAcessoOPT ; persistencia : solicitacaoPersistenciaOPT ; retornoPersistencia : resultadoPersistenciaIPT ; }
+    component def GerenciadorHospedesCP { ports : cadastroRecebido : solicitaCadastroHospedeIPT ; resultadoCadastro : resultadoCadastroHospedeOPT ; persistencia : solicitacaoPersistenciaOPT ; retornoPersistencia : resultadoPersistenciaIPT ; }
+    component def GerenciadorHospedagensCP { ports : checkoutRecebido : solicitaCheckoutIPT ; persistencia : solicitacaoPersistenciaOPT ; retornoPersistencia : resultadoPersistenciaIPT ; }
+    component def ValidadorPagamentoCP { ports : financeiro : processaFinanceiroIPT ; saldoValidado : gestaoSaldoOPT ; persistencia : solicitacaoPersistenciaOPT ; retornoPersistencia : resultadoPersistenciaIPT ; }
+    component def ControladorConsumoCP { ports : consumoSolicitado : requisicaoConsumoIPT ; saidaFinanceiraConsumo : processaFinanceiroOPT ; persistencia : solicitacaoPersistenciaOPT ; retornoPersistencia : resultadoPersistenciaIPT ; }
+    component def ControladorTempoAcessoCP { ports : tempoSolicitado : tempoAcessoIPT ; saidaFinanceiraTempoAcesso : processaFinanceiroOPT ; }
+    component def GerenciadorReservasCP { ports : reservaRecebida : registroReservaIPT ; persistencia : solicitacaoPersistenciaOPT ; retornoPersistencia : resultadoPersistenciaIPT ; }
+    component def ControladorAreaCP { ports : validacaoArea : validacaoAreaIPT ; liberacaoArea : liberaAreaOPT ; }
+    component def RepositorioDadosCP { ports : solicitacao : solicitacaoPersistenciaIPT ; resultado : resultadoPersistenciaOPT ; statusSaldo : gestaoSaldoIPT ; }
     boundary component def LeitorDispositivoCP { ports : leituraDispositivo : leituraDispositivoOPT ; }
     boundary component def AtuadorPortaCP { ports : comando : comandoAtuadorIPT ; }
+    boundary component def SensorEstadoPortaCP { ports : estadoPorta : estadoPortaOPT ; }
     boundary component def TerminalCheckOutCP { ports : checkout : solicitaCheckoutOPT ; }
     boundary component def PontoConsumoCP { ports : solicitacaoConsumo : requisicaoConsumoOPT ; }
     boundary component def SensorAcessoCP { ports : solicitacaoTempoAcesso : tempoAcessoOPT ; }
     boundary component def TerminalReservaCP { ports : reservaTerminal : registroReservaOPT ; }
-    boundary component def AreaComumCP { ports : solicitacaoArea : validacaoAreaOPT ; }
+    boundary component def TerminalCadastroHospedeCP { ports : dadosCadastro : solicitaCadastroHospedeOPT ; resultadoCadastro : resultadoCadastroHospedeIPT ; }
+    boundary component def AreaComumCP { ports : solicitacaoArea : validacaoAreaOPT ; liberacaoArea : liberaAreaIPT ; }
     component def OrquestradorHotelCP { ports : entradaFinanceira : processaFinanceiroIPT ; saidaFinanceira : processaFinanceiroOPT ; }
 
     constraint ValidarCheckInEQ ( reservaConfirmada : Boolean , pagamentoInicialAprovado : Boolean ) : ( checkInAutorizado : Boolean ) {
@@ -207,52 +277,91 @@ package SysADL_components {
         equation = consumoRegistrado == valorConsumo
     }
 
-    activity def RealizarCheckInAC ( reservaConfirmada : Boolean ) ( pagamentoInicialAprovado : Boolean ) : ( checkInAutorizado : Boolean ) {
+    activity def CadastrarHospedeAC ( dadosHospede : DadosHospede ) : ( resultadoCadastro : ResultadoCadastro ) {
+        body {
+            actions : validarDados : ValidarDadosHospedeAN { using pins : dadosHospede : DadosHospede ; }
+                      persistirHospede : PersistirHospedeAN { using pins : dadosHospedePersistencia : DadosHospede ; dadosValidos : Boolean ; }
+            delegate dadosHospede to dadosHospede
+            delegate dadosHospede to dadosHospedePersistencia
+            delegate resultadoCadastro to persistirHospede
+            flow from validarDados to dadosValidos
+        }
+    }
+
+    activity def RealizarCheckInAC ( idHospede : ID_Hospede ) ( idReserva : ID_Reserva ) ( reservaConfirmada : Boolean ) ( pagamentoInicialAprovado : Boolean ) : ( checkInAutorizado : Boolean , persistenciaConcluida : Boolean ) {
         body {
             actions : validarCheckIn : ValidarCheckInAN { using pins : reservaConfirmada : Boolean ; pagamentoInicialAprovado : Boolean ; }
+                      persistirCheckIn : PersistirCheckInAN { using pins : idHospede : ID_Hospede ; idReserva : ID_Reserva ; checkInAutorizadoPersistencia : Boolean ; }
+            delegate idHospede to idHospede
+            delegate idReserva to idReserva
             delegate reservaConfirmada to reservaConfirmada
             delegate pagamentoInicialAprovado to pagamentoInicialAprovado
             delegate checkInAutorizado to validarCheckIn
+            delegate persistenciaConcluida to persistirCheckIn
+            flow from validarCheckIn to checkInAutorizadoPersistencia
         }
     }
 
-    activity def AutorizarAcessoAC ( dispositivoIdentificado : Boolean ) ( hospedagemAtiva : Boolean ) : ( acessoAutorizado : Boolean ) {
+    activity def AutorizarAcessoAC ( idDispositivo : ID_Dispositivo ) ( dispositivoIdentificado : Boolean ) ( hospedagemAtiva : Boolean ) ( estadoPortaAtual : EstadoPorta ) : ( comandoAtuador : Boolean , registroPersistido : Boolean ) {
         body {
             actions : decidirAcesso : DecidirAcessoAN { using pins : dispositivoIdentificado : Boolean ; hospedagemAtiva : Boolean ; }
+                      verificarEstadoPorta : VerificarEstadoPortaAN { using pins : acessoAutorizadoVerificacao : Boolean ; estadoPortaAtual : EstadoPorta ; }
+                      persistirAcesso : PersistirAcessoAN { using pins : idDispositivo : ID_Dispositivo ; comandoPersistencia : Boolean ; }
+            delegate idDispositivo to idDispositivo
             delegate dispositivoIdentificado to dispositivoIdentificado
             delegate hospedagemAtiva to hospedagemAtiva
-            delegate acessoAutorizado to decidirAcesso
+            delegate estadoPortaAtual to estadoPortaAtual
+            delegate comandoAtuador to verificarEstadoPorta
+            delegate registroPersistido to persistirAcesso
+            flow from decidirAcesso to acessoAutorizadoVerificacao
+            flow from verificarEstadoPorta to comandoPersistencia
         }
     }
 
-    activity def RealizarCheckOutAC ( valorCalculado : Saldo ) ( valorCobrado : Saldo ) : ( dispositivoRevogado : Boolean , pagamentoProcessado : Boolean ) {
+    activity def RealizarCheckOutAC ( idHospedagem : ID_Hospedagem ) ( valorCalculado : Saldo ) ( valorCobrado : Saldo ) : ( dispositivoRevogado : Boolean , pagamentoProcessado : Boolean , persistenciaConcluida : Boolean ) {
         body {
             actions : calcularFatura : CalcularFaturaAN { using pins : valorCalculado : Saldo ; valorCobrado : Saldo ; }
                       processarPagamento : ProcessarPagamentoAN { using pins : faturaValidadaPagamento : Boolean ; }
                       revogarDispositivo : RevogarDispositivoAN { using pins : faturaValidadaRevogacao : Boolean ; }
+                      persistirCheckOut : PersistirCheckOutAN { using pins : idHospedagem : ID_Hospedagem ; pagamentoProcessadoPersistencia : Boolean ; dispositivoRevogadoPersistencia : Boolean ; }
+            delegate idHospedagem to idHospedagem
             delegate valorCalculado to valorCalculado
             delegate valorCobrado to valorCobrado
             delegate dispositivoRevogado to revogarDispositivo
             delegate pagamentoProcessado to processarPagamento
+            delegate persistenciaConcluida to persistirCheckOut
             flow from calcularFatura to faturaValidadaPagamento
             flow from calcularFatura to faturaValidadaRevogacao
+            flow from processarPagamento to pagamentoProcessadoPersistencia
+            flow from revogarDispositivo to dispositivoRevogadoPersistencia
         }
     }
 
-    activity def RegistrarConsumoAC ( valorConsumo : Saldo ) : ( consumoRegistrado : Saldo ) {
+    activity def RegistrarConsumoAC ( idHospedagem : ID_Hospedagem ) ( valorConsumo : Saldo ) : ( consumoRegistrado : Saldo , persistenciaConcluida : Boolean ) {
         body {
             actions : registrarConsumo : RegistrarConsumoAN { using pins : valorConsumo : Saldo ; }
+                      persistirConsumo : PersistirConsumoAN { using pins : idHospedagem : ID_Hospedagem ; consumoPersistencia : Saldo ; }
+            delegate idHospedagem to idHospedagem
             delegate valorConsumo to valorConsumo
             delegate consumoRegistrado to registrarConsumo
+            delegate persistenciaConcluida to persistirConsumo
+            flow from registrarConsumo to consumoPersistencia
         }
     }
 
+    action def ValidarDadosHospedeAN ( dadosHospede : DadosHospede ) : Boolean { }
+    action def PersistirHospedeAN ( dadosHospedePersistencia : DadosHospede , dadosValidos : Boolean ) : ResultadoCadastro { }
     action def ValidarCheckInAN ( reservaConfirmada : Boolean , pagamentoInicialAprovado : Boolean ) : Boolean { constraint : post-condition ValidarCheckInEQ }
+    action def PersistirCheckInAN ( idHospede : ID_Hospede , idReserva : ID_Reserva , checkInAutorizadoPersistencia : Boolean ) : Boolean { }
     action def DecidirAcessoAN ( dispositivoIdentificado : Boolean , hospedagemAtiva : Boolean ) : Boolean { constraint : post-condition DecidirAcessoEQ }
+    action def VerificarEstadoPortaAN ( acessoAutorizadoVerificacao : Boolean , estadoPortaAtual : EstadoPorta ) : Boolean { }
+    action def PersistirAcessoAN ( idDispositivo : ID_Dispositivo , comandoPersistencia : Boolean ) : Boolean { }
     action def CalcularFaturaAN ( valorCalculado : Saldo , valorCobrado : Saldo ) : Boolean { constraint : post-condition CalcularFaturaEQ }
     action def ProcessarPagamentoAN ( faturaValidada : Boolean ) : Boolean { constraint : post-condition ProcessarPagamentoEQ }
     action def RevogarDispositivoAN ( faturaValidada : Boolean ) : Boolean { constraint : post-condition RevogarDispositivoEQ }
+    action def PersistirCheckOutAN ( idHospedagem : ID_Hospedagem , pagamentoProcessadoPersistencia : Boolean , dispositivoRevogadoPersistencia : Boolean ) : Boolean { }
     action def RegistrarConsumoAN ( valorConsumo : Saldo ) : Saldo { constraint : post-condition RegistrarConsumoEQ }
+    action def PersistirConsumoAN ( idHospedagem : ID_Hospedagem , consumoPersistencia : Saldo ) : Boolean { }
 
     executable def RealizarCheckInEX(in reservaConfirmada:Boolean, in pagamentoInicialAprovado:Boolean): out Boolean { return reservaConfirmada && pagamentoInicialAprovado ; }
     executable def AutorizarAcessoEX(in dispositivoIdentificado:Boolean, in hospedagemAtiva:Boolean): out Boolean { return dispositivoIdentificado && hospedagemAtiva ; }
@@ -263,9 +372,10 @@ package SysADL_components {
 }
 
 allocations {
+    activity CadastrarHospedeAC to GerenciadorHospedesCP
     activity RealizarCheckInAC to GerenciadorReservasCP
     activity AutorizarAcessoAC to ControladorAcessoCP
-    activity RealizarCheckOutAC to ValidadorPagamentoCP
+    activity RealizarCheckOutAC to GerenciadorHospedagensCP
     activity RegistrarConsumoAC to ControladorConsumoCP
     executable RealizarCheckInEX to ValidarCheckInAN
     executable AutorizarAcessoEX to DecidirAcessoAN
