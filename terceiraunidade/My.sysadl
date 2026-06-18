@@ -233,6 +233,82 @@ package SysADL_components {
         }
     }
 
+    component def ModuloControleAcessoCP {
+        configuration {
+            components :
+                leitor : LeitorDispositivoCP { using ports : leituraDispositivo : leituraDispositivoOPT ; }
+                sensorEstadoPorta : SensorEstadoPortaCP { using ports : estadoPorta : estadoPortaOPT ; }
+                controladorAcesso : ControladorAcessoCP { using ports : validacao : validaAcessoIPT ; estadoPortaAtual : estadoPortaIPT ; autorizacaoAcesso : autorizaAcessoOPT ; persistenciaAcesso : solicitacaoPersistenciaOPT ; retornoPersistenciaAcesso : resultadoPersistenciaIPT ; }
+                atuador : AtuadorPortaCP { using ports : comando : comandoAtuadorIPT ; }
+                repo : RepositorioDadosCP { using ports : solicitacao : solicitacaoPersistenciaIPT ; resultado : resultadoPersistenciaOPT ; }
+            connectors :
+                ac1 : leituraDispositivoCN bindings leituraDispositivo = validacao ;
+                ac2 : estadoPortaCN bindings estadoPorta = estadoPortaAtual ;
+                ac3 : controleAcessoCN bindings autorizacaoAcesso = comando ;
+                ac4 : solicitacaoPersistenciaCN bindings persistenciaAcesso = solicitacao ;
+                ac5 : resultadoPersistenciaCN bindings resultado = retornoPersistenciaAcesso ;
+        }
+    }
+
+    component def ModuloCadastroHospedagemCP {
+        configuration {
+            components :
+                terminalCadastro : TerminalCadastroHospedeCP { using ports : dadosCadastro : solicitaCadastroHospedeOPT ; resultadoCadastroTerminal : resultadoCadastroHospedeIPT ; }
+                hospedes : GerenciadorHospedesCP { using ports : cadastroRecebido : solicitaCadastroHospedeIPT ; resultadoCadastroGerado : resultadoCadastroHospedeOPT ; persistenciaHospede : solicitacaoPersistenciaOPT ; retornoPersistenciaHospede : resultadoPersistenciaIPT ; }
+                terminalReserva : TerminalReservaCP { using ports : reservaTerminal : registroReservaOPT ; }
+                reservas : GerenciadorReservasCP { using ports : reservaRecebida : registroReservaIPT ; persistenciaReserva : solicitacaoPersistenciaOPT ; retornoPersistenciaReserva : resultadoPersistenciaIPT ; }
+                terminalCheckOut : TerminalCheckOutCP { using ports : checkout : solicitaCheckoutOPT ; }
+                hospedagens : GerenciadorHospedagensCP { using ports : checkoutRecebido : solicitaCheckoutIPT ; persistenciaHospedagem : solicitacaoPersistenciaOPT ; retornoPersistenciaHospedagem : resultadoPersistenciaIPT ; }
+                repo : RepositorioDadosCP { using ports : solicitacao : solicitacaoPersistenciaIPT ; resultado : resultadoPersistenciaOPT ; }
+            connectors :
+                ch1 : solicitacaoCadastroHospedeCN bindings dadosCadastro = cadastroRecebido ;
+                ch2 : resultadoCadastroHospedeCN bindings resultadoCadastroGerado = resultadoCadastroTerminal ;
+                ch3 : reservaCN bindings reservaTerminal = reservaRecebida ;
+                ch4 : checkoutCN bindings checkout = checkoutRecebido ;
+                ch5 : solicitacaoPersistenciaCN bindings persistenciaHospede = solicitacao ;
+                ch6 : resultadoPersistenciaCN bindings resultado = retornoPersistenciaHospede ;
+                ch7 : solicitacaoPersistenciaCN bindings persistenciaReserva = solicitacao ;
+                ch8 : resultadoPersistenciaCN bindings resultado = retornoPersistenciaReserva ;
+                ch9 : solicitacaoPersistenciaCN bindings persistenciaHospedagem = solicitacao ;
+                ch10 : resultadoPersistenciaCN bindings resultado = retornoPersistenciaHospedagem ;
+        }
+    }
+
+    component def ModuloConsumoPagamentoCP {
+        configuration {
+            components :
+                pontoConsumo : PontoConsumoCP { using ports : solicitacaoConsumo : requisicaoConsumoOPT ; }
+                consumo : ControladorConsumoCP { using ports : consumoSolicitado : requisicaoConsumoIPT ; saidaFinanceiraConsumo : processaFinanceiroOPT ; persistenciaConsumo : solicitacaoPersistenciaOPT ; retornoPersistenciaConsumo : resultadoPersistenciaIPT ; }
+                sensorAcesso : SensorAcessoCP { using ports : solicitacaoTempoAcesso : tempoAcessoOPT ; }
+                controladorTempoAcesso : ControladorTempoAcessoCP { using ports : tempoSolicitado : tempoAcessoIPT ; saidaFinanceiraTempoAcesso : processaFinanceiroOPT ; }
+                sistema : OrquestradorHotelCP { using ports : entradaFinanceira : processaFinanceiroIPT ; saidaFinanceira : processaFinanceiroOPT ; }
+                pagamento : ValidadorPagamentoCP { using ports : financeiro : processaFinanceiroIPT ; saldoValidado : gestaoSaldoOPT ; persistenciaPagamento : solicitacaoPersistenciaOPT ; retornoPersistenciaPagamento : resultadoPersistenciaIPT ; }
+                repo : RepositorioDadosCP { using ports : solicitacao : solicitacaoPersistenciaIPT ; resultado : resultadoPersistenciaOPT ; statusSaldo : gestaoSaldoIPT ; }
+            connectors :
+                cp1 : solicitacaoConsumoCN bindings solicitacaoConsumo = consumoSolicitado ;
+                cp2 : tempoAcessoCN bindings solicitacaoTempoAcesso = tempoSolicitado ;
+                cp3 : financeiroCN bindings saidaFinanceiraConsumo = entradaFinanceira ;
+                cp4 : financeiroCN bindings saidaFinanceiraTempoAcesso = entradaFinanceira ;
+                cp5 : financeiroCN bindings saidaFinanceira = financeiro ;
+                cp6 : statusSaldoCN bindings saldoValidado = statusSaldo ;
+                cp7 : solicitacaoPersistenciaCN bindings persistenciaConsumo = solicitacao ;
+                cp8 : resultadoPersistenciaCN bindings resultado = retornoPersistenciaConsumo ;
+                cp9 : solicitacaoPersistenciaCN bindings persistenciaPagamento = solicitacao ;
+                cp10 : resultadoPersistenciaCN bindings resultado = retornoPersistenciaPagamento ;
+        }
+    }
+
+    component def ModuloAreasComunsCP {
+        configuration {
+            components :
+                areaComum : AreaComumCP { using ports : solicitacaoArea : validacaoAreaOPT ; liberacaoAreaTerminal : liberaAreaIPT ; }
+                ctrlArea : ControladorAreaCP { using ports : validacaoArea : validacaoAreaIPT ; liberacaoAreaControle : liberaAreaOPT ; }
+            connectors :
+                ar1 : solicitacaoAreaCN bindings solicitacaoArea = validacaoArea ;
+                ar2 : respostaAreaCN bindings liberacaoAreaControle = liberacaoAreaTerminal ;
+        }
+    }
+
     component def ControladorAcessoCP { ports : validacao : validaAcessoIPT ; estadoPortaAtual : estadoPortaIPT ; autorizacaoAcesso : autorizaAcessoOPT ; persistencia : solicitacaoPersistenciaOPT ; retornoPersistencia : resultadoPersistenciaIPT ; }
     component def GerenciadorHospedesCP { ports : cadastroRecebido : solicitaCadastroHospedeIPT ; resultadoCadastro : resultadoCadastroHospedeOPT ; persistencia : solicitacaoPersistenciaOPT ; retornoPersistencia : resultadoPersistenciaIPT ; }
     component def GerenciadorHospedagensCP { ports : checkoutRecebido : solicitaCheckoutIPT ; persistencia : solicitacaoPersistenciaOPT ; retornoPersistencia : resultadoPersistenciaIPT ; }
@@ -257,12 +333,24 @@ package SysADL_components {
         equation = checkInAutorizado == (reservaConfirmada == true && pagamentoInicialAprovado == true)
     }
 
+    constraint ValidarDadosHospedeEQ ( hospedeJaCadastrado : Boolean ) : ( dadosValidos : Boolean ) {
+        equation = dadosValidos == (hospedeJaCadastrado == false)
+    }
+
+    constraint ValidarCheckInComConsultaEQ ( hospedeEncontrado : Boolean , reservaConfirmada : Boolean , pagamentoInicialAprovado : Boolean ) : ( checkInAutorizado : Boolean ) {
+        equation = checkInAutorizado == (hospedeEncontrado == true && reservaConfirmada == true && pagamentoInicialAprovado == true)
+    }
+
     constraint DecidirAcessoEQ ( dispositivoIdentificado : Boolean , hospedagemAtiva : Boolean ) : ( acessoAutorizado : Boolean ) {
         equation = acessoAutorizado == (dispositivoIdentificado == true && hospedagemAtiva == true)
     }
 
     constraint CalcularFaturaEQ ( valorCalculado : Saldo , valorCobrado : Saldo ) : ( faturaValidada : Boolean ) {
         equation = faturaValidada == (valorCalculado == valorCobrado)
+    }
+
+    constraint CalcularFaturaComConsultaEQ ( hospedagemEncontrada : Boolean , valorCalculado : Saldo , valorCobrado : Saldo ) : ( faturaValidada : Boolean ) {
+        equation = faturaValidada == (hospedagemEncontrada == true && valorCalculado == valorCobrado)
     }
 
     constraint ProcessarPagamentoEQ ( faturaValidada : Boolean ) : ( pagamentoProcessado : Boolean ) {
@@ -277,59 +365,80 @@ package SysADL_components {
         equation = consumoRegistrado == valorConsumo
     }
 
+    constraint ValidarConsumoEQ ( hospedagemAtiva : Boolean ) : ( consumoAutorizado : Boolean ) {
+        equation = consumoAutorizado == hospedagemAtiva
+    }
+
     activity def CadastrarHospedeAC ( dadosHospede : DadosHospede ) : ( resultadoCadastro : ResultadoCadastro ) {
         body {
-            actions : validarDados : ValidarDadosHospedeAN { using pins : dadosHospede : DadosHospede ; }
+            actions : consultarHospede : ConsultarHospedeCadastroAN { using pins : dadosHospedeConsulta : DadosHospede ; }
+                      validarDados : ValidarDadosHospedeAN { using pins : dadosHospedeValidacao : DadosHospede ; hospedeJaCadastrado : Boolean ; }
                       persistirHospede : PersistirHospedeAN { using pins : dadosHospedePersistencia : DadosHospede ; dadosValidos : Boolean ; }
-            delegate dadosHospede to dadosHospede
+            delegate dadosHospede to dadosHospedeConsulta
+            delegate dadosHospede to dadosHospedeValidacao
             delegate dadosHospede to dadosHospedePersistencia
             delegate resultadoCadastro to persistirHospede
+            flow from consultarHospede to hospedeJaCadastrado
             flow from validarDados to dadosValidos
         }
     }
 
-    activity def RealizarCheckInAC ( idHospede : ID_Hospede ) ( idReserva : ID_Reserva ) ( reservaConfirmada : Boolean ) ( pagamentoInicialAprovado : Boolean ) : ( checkInAutorizado : Boolean , persistenciaConcluida : Boolean ) {
+    activity def RealizarCheckInAC ( idHospede : ID_Hospede ) ( idReserva : ID_Reserva ) ( pagamentoInicialAprovado : Boolean ) : ( checkInAutorizado : Boolean , persistenciaConcluida : Boolean ) {
         body {
-            actions : validarCheckIn : ValidarCheckInAN { using pins : reservaConfirmada : Boolean ; pagamentoInicialAprovado : Boolean ; }
+            actions : consultarHospede : ConsultarHospedeCheckInAN { using pins : idHospedeConsulta : ID_Hospede ; }
+                      consultarReserva : ConsultarReservaCheckInAN { using pins : idReservaConsulta : ID_Reserva ; }
+                      validarCheckIn : ValidarCheckInAN { using pins : hospedeEncontrado : Boolean ; reservaConfirmada : Boolean ; pagamentoInicialAprovado : Boolean ; }
                       persistirCheckIn : PersistirCheckInAN { using pins : idHospede : ID_Hospede ; idReserva : ID_Reserva ; checkInAutorizadoPersistencia : Boolean ; }
+            delegate idHospede to idHospedeConsulta
             delegate idHospede to idHospede
+            delegate idReserva to idReservaConsulta
             delegate idReserva to idReserva
-            delegate reservaConfirmada to reservaConfirmada
             delegate pagamentoInicialAprovado to pagamentoInicialAprovado
             delegate checkInAutorizado to validarCheckIn
             delegate persistenciaConcluida to persistirCheckIn
+            flow from consultarHospede to hospedeEncontrado
+            flow from consultarReserva to reservaConfirmada
             flow from validarCheckIn to checkInAutorizadoPersistencia
         }
     }
 
-    activity def AutorizarAcessoAC ( idDispositivo : ID_Dispositivo ) ( dispositivoIdentificado : Boolean ) ( hospedagemAtiva : Boolean ) ( estadoPortaAtual : EstadoPorta ) : ( comandoAtuador : Boolean , registroPersistido : Boolean ) {
+    activity def AutorizarAcessoAC ( idDispositivo : ID_Dispositivo ) ( estadoPortaAtual : EstadoPorta ) : ( comandoAtuador : Boolean , registroPersistido : Boolean ) {
         body {
-            actions : decidirAcesso : DecidirAcessoAN { using pins : dispositivoIdentificado : Boolean ; hospedagemAtiva : Boolean ; }
+            actions : consultarDispositivo : ConsultarDispositivoAN { using pins : idDispositivoConsulta : ID_Dispositivo ; }
+                      consultarHospedagemAtiva : ConsultarHospedagemAtivaAN { using pins : idDispositivoHospedagem : ID_Dispositivo ; }
+                      decidirAcesso : DecidirAcessoAN { using pins : dispositivoIdentificado : Boolean ; hospedagemAtiva : Boolean ; }
                       verificarEstadoPorta : VerificarEstadoPortaAN { using pins : acessoAutorizadoVerificacao : Boolean ; estadoPortaAtual : EstadoPorta ; }
                       persistirAcesso : PersistirAcessoAN { using pins : idDispositivo : ID_Dispositivo ; comandoPersistencia : Boolean ; }
+            delegate idDispositivo to idDispositivoConsulta
+            delegate idDispositivo to idDispositivoHospedagem
             delegate idDispositivo to idDispositivo
-            delegate dispositivoIdentificado to dispositivoIdentificado
-            delegate hospedagemAtiva to hospedagemAtiva
             delegate estadoPortaAtual to estadoPortaAtual
             delegate comandoAtuador to verificarEstadoPorta
             delegate registroPersistido to persistirAcesso
+            flow from consultarDispositivo to dispositivoIdentificado
+            flow from consultarHospedagemAtiva to hospedagemAtiva
             flow from decidirAcesso to acessoAutorizadoVerificacao
             flow from verificarEstadoPorta to comandoPersistencia
         }
     }
 
-    activity def RealizarCheckOutAC ( idHospedagem : ID_Hospedagem ) ( valorCalculado : Saldo ) ( valorCobrado : Saldo ) : ( dispositivoRevogado : Boolean , pagamentoProcessado : Boolean , persistenciaConcluida : Boolean ) {
+    activity def RealizarCheckOutAC ( idHospedagem : ID_Hospedagem ) ( valorCobrado : Saldo ) : ( dispositivoRevogado : Boolean , pagamentoProcessado : Boolean , persistenciaConcluida : Boolean ) {
         body {
-            actions : calcularFatura : CalcularFaturaAN { using pins : valorCalculado : Saldo ; valorCobrado : Saldo ; }
+            actions : consultarHospedagem : ConsultarHospedagemCheckOutAN { using pins : idHospedagemConsulta : ID_Hospedagem ; }
+                      consultarFatura : ConsultarFaturaAN { using pins : idHospedagemFatura : ID_Hospedagem ; }
+                      calcularFatura : CalcularFaturaAN { using pins : hospedagemEncontrada : Boolean ; valorCalculado : Saldo ; valorCobrado : Saldo ; }
                       processarPagamento : ProcessarPagamentoAN { using pins : faturaValidadaPagamento : Boolean ; }
                       revogarDispositivo : RevogarDispositivoAN { using pins : faturaValidadaRevogacao : Boolean ; }
                       persistirCheckOut : PersistirCheckOutAN { using pins : idHospedagem : ID_Hospedagem ; pagamentoProcessadoPersistencia : Boolean ; dispositivoRevogadoPersistencia : Boolean ; }
+            delegate idHospedagem to idHospedagemConsulta
+            delegate idHospedagem to idHospedagemFatura
             delegate idHospedagem to idHospedagem
-            delegate valorCalculado to valorCalculado
             delegate valorCobrado to valorCobrado
             delegate dispositivoRevogado to revogarDispositivo
             delegate pagamentoProcessado to processarPagamento
             delegate persistenciaConcluida to persistirCheckOut
+            flow from consultarHospedagem to hospedagemEncontrada
+            flow from consultarFatura to valorCalculado
             flow from calcularFatura to faturaValidadaPagamento
             flow from calcularFatura to faturaValidadaRevogacao
             flow from processarPagamento to pagamentoProcessadoPersistencia
@@ -339,36 +448,50 @@ package SysADL_components {
 
     activity def RegistrarConsumoAC ( idHospedagem : ID_Hospedagem ) ( valorConsumo : Saldo ) : ( consumoRegistrado : Saldo , persistenciaConcluida : Boolean ) {
         body {
-            actions : registrarConsumo : RegistrarConsumoAN { using pins : valorConsumo : Saldo ; }
+            actions : consultarHospedagem : ConsultarHospedagemConsumoAN { using pins : idHospedagemConsulta : ID_Hospedagem ; }
+                      validarConsumo : ValidarConsumoAN { using pins : hospedagemAtiva : Boolean ; }
+                      registrarConsumo : RegistrarConsumoAN { using pins : valorConsumo : Saldo ; consumoAutorizado : Boolean ; }
                       persistirConsumo : PersistirConsumoAN { using pins : idHospedagem : ID_Hospedagem ; consumoPersistencia : Saldo ; }
+            delegate idHospedagem to idHospedagemConsulta
             delegate idHospedagem to idHospedagem
             delegate valorConsumo to valorConsumo
             delegate consumoRegistrado to registrarConsumo
             delegate persistenciaConcluida to persistirConsumo
+            flow from consultarHospedagem to hospedagemAtiva
+            flow from validarConsumo to consumoAutorizado
             flow from registrarConsumo to consumoPersistencia
         }
     }
 
-    action def ValidarDadosHospedeAN ( dadosHospede : DadosHospede ) : Boolean { }
+    action def ConsultarHospedeCadastroAN ( dadosHospedeConsulta : DadosHospede ) : Boolean { }
+    action def ValidarDadosHospedeAN ( dadosHospedeValidacao : DadosHospede , hospedeJaCadastrado : Boolean ) : Boolean { constraint : post-condition ValidarDadosHospedeEQ }
     action def PersistirHospedeAN ( dadosHospedePersistencia : DadosHospede , dadosValidos : Boolean ) : ResultadoCadastro { }
-    action def ValidarCheckInAN ( reservaConfirmada : Boolean , pagamentoInicialAprovado : Boolean ) : Boolean { constraint : post-condition ValidarCheckInEQ }
+    action def ConsultarHospedeCheckInAN ( idHospedeConsulta : ID_Hospede ) : Boolean { }
+    action def ConsultarReservaCheckInAN ( idReservaConsulta : ID_Reserva ) : Boolean { }
+    action def ValidarCheckInAN ( hospedeEncontrado : Boolean , reservaConfirmada : Boolean , pagamentoInicialAprovado : Boolean ) : Boolean { constraint : post-condition ValidarCheckInComConsultaEQ }
     action def PersistirCheckInAN ( idHospede : ID_Hospede , idReserva : ID_Reserva , checkInAutorizadoPersistencia : Boolean ) : Boolean { }
+    action def ConsultarDispositivoAN ( idDispositivoConsulta : ID_Dispositivo ) : Boolean { }
+    action def ConsultarHospedagemAtivaAN ( idDispositivoHospedagem : ID_Dispositivo ) : Boolean { }
     action def DecidirAcessoAN ( dispositivoIdentificado : Boolean , hospedagemAtiva : Boolean ) : Boolean { constraint : post-condition DecidirAcessoEQ }
     action def VerificarEstadoPortaAN ( acessoAutorizadoVerificacao : Boolean , estadoPortaAtual : EstadoPorta ) : Boolean { }
     action def PersistirAcessoAN ( idDispositivo : ID_Dispositivo , comandoPersistencia : Boolean ) : Boolean { }
-    action def CalcularFaturaAN ( valorCalculado : Saldo , valorCobrado : Saldo ) : Boolean { constraint : post-condition CalcularFaturaEQ }
+    action def ConsultarHospedagemCheckOutAN ( idHospedagemConsulta : ID_Hospedagem ) : Boolean { }
+    action def ConsultarFaturaAN ( idHospedagemFatura : ID_Hospedagem ) : Saldo { }
+    action def CalcularFaturaAN ( hospedagemEncontrada : Boolean , valorCalculado : Saldo , valorCobrado : Saldo ) : Boolean { constraint : post-condition CalcularFaturaComConsultaEQ }
     action def ProcessarPagamentoAN ( faturaValidada : Boolean ) : Boolean { constraint : post-condition ProcessarPagamentoEQ }
     action def RevogarDispositivoAN ( faturaValidada : Boolean ) : Boolean { constraint : post-condition RevogarDispositivoEQ }
     action def PersistirCheckOutAN ( idHospedagem : ID_Hospedagem , pagamentoProcessadoPersistencia : Boolean , dispositivoRevogadoPersistencia : Boolean ) : Boolean { }
-    action def RegistrarConsumoAN ( valorConsumo : Saldo ) : Saldo { constraint : post-condition RegistrarConsumoEQ }
+    action def ConsultarHospedagemConsumoAN ( idHospedagemConsulta : ID_Hospedagem ) : Boolean { }
+    action def ValidarConsumoAN ( hospedagemAtiva : Boolean ) : Boolean { constraint : post-condition ValidarConsumoEQ }
+    action def RegistrarConsumoAN ( valorConsumo : Saldo , consumoAutorizado : Boolean ) : Saldo { constraint : post-condition RegistrarConsumoEQ }
     action def PersistirConsumoAN ( idHospedagem : ID_Hospedagem , consumoPersistencia : Saldo ) : Boolean { }
 
-    executable def RealizarCheckInEX(in reservaConfirmada:Boolean, in pagamentoInicialAprovado:Boolean): out Boolean { return reservaConfirmada && pagamentoInicialAprovado ; }
+    executable def RealizarCheckInEX(in hospedeEncontrado:Boolean, in reservaConfirmada:Boolean, in pagamentoInicialAprovado:Boolean): out Boolean { return hospedeEncontrado && reservaConfirmada && pagamentoInicialAprovado ; }
     executable def AutorizarAcessoEX(in dispositivoIdentificado:Boolean, in hospedagemAtiva:Boolean): out Boolean { return dispositivoIdentificado && hospedagemAtiva ; }
-    executable def CalcularFaturaEX(in valorCalculado:Saldo, in valorCobrado:Saldo): out Boolean { return valorCalculado == valorCobrado ; }
+    executable def CalcularFaturaEX(in hospedagemEncontrada:Boolean, in valorCalculado:Saldo, in valorCobrado:Saldo): out Boolean { return hospedagemEncontrada && valorCalculado == valorCobrado ; }
     executable def ProcessarPagamentoEX(in faturaValidada:Boolean): out Boolean { return faturaValidada ; }
     executable def RevogarDispositivoEX(in faturaValidada:Boolean): out Boolean { return faturaValidada ; }
-    executable def RegistrarConsumoEX(in valorConsumo:Saldo): out Saldo { return valorConsumo ; }
+    executable def RegistrarConsumoEX(in valorConsumo:Saldo, in consumoAutorizado:Boolean): out Saldo { return valorConsumo ; }
 }
 
 allocations {
